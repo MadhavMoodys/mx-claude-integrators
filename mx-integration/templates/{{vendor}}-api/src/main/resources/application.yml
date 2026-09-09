@@ -1,0 +1,53 @@
+server:
+  port: 3000
+
+spring:
+  application:
+    name: {{vendor}}-api
+
+management:
+  endpoints:
+    web:
+      base-path: /internal
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: never
+
+# Credentials are ${ENV_VAR} only. The env vars are populated from parameters.yaml as
+# $(Secret.NAME); a literal here would be committed to git and is blocked by a hook.
+{{vendor}}:
+  base-url: ${{{VENDOR}}_BASE_URL}
+  api-key: ${{{VENDOR}}_API_KEY}
+  username: ${{{VENDOR}}_USERNAME:}
+  password: ${{{VENDOR}}_PASSWORD:}
+  request-timeout: 30000
+  token-refresh-buffer-minutes: 10
+  retry-max-wait-seconds: 30
+
+mx:
+  http:
+    client:
+      clients:
+        {{vendor}}:
+          base-url: ${{{VENDOR}}_BASE_URL}
+          connect-timeout: 10s
+          read-timeout: 30s
+
+resilience4j:
+  retry:
+    instances:
+      {{vendor}}Api:
+        max-attempts: 5
+        wait-duration: 1s
+        enable-exponential-backoff: true
+        exponential-backoff-multiplier: 2
+        # Without randomisation every pod retries in lockstep, so a vendor outage returns
+        # as a synchronised burst the moment it recovers.
+        enable-randomized-wait: true
+        randomized-wait-factor: 0.5
+
+logging:
+  level:
+    com.moodys.maxsight.{{vendor}}: INFO

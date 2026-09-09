@@ -1,0 +1,147 @@
+chartId: generic-api-service/v6
+acceptsUserTokens: true
+rdsCaEnabled: true
+
+applications:
+  - name: {{vendor}}-api
+    deployment:
+      podTemplate:
+        annotations:
+          metrics/scrape: "true"
+          metrics/port: "3000"
+          metrics/path: /internal/metrics
+        spec:
+          containers:
+            - name: {{vendor}}-api
+              image:
+                name: {{vendor}}-api
+              configRefs:
+                - global-configs
+                - {{vendor}}-api-configs
+              secretRefs:
+                - {{vendor}}-api-secrets
+{{#connector}}
+                - database-secrets
+{{/connector}}
+              ports:
+                - containerPort: 3000
+              livenessProbe:
+                httpGet:
+                  path: /internal/health
+                  port: 3000
+                initialDelaySeconds: 60
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+              readinessProbe:
+                httpGet:
+                  path: /internal/health
+                  port: 3000
+                initialDelaySeconds: 45
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+              securityContext:
+                allowPrivilegeEscalation: false
+              resources:
+                requests:
+                  memory: "1Gi"
+                  cpu: "250m"
+                limits:
+                  memory: "2Gi"
+    horizontalpodautoscaler:
+      minReplicas: 2
+      maxReplicas: 4
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 67
+        - type: Resource
+          resource:
+            name: memory
+            target:
+              type: Utilization
+              averageUtilization: 67
+    service:
+      spec:
+        ports:
+          application:
+            port: 80
+            targetPort: 3000
+            protocol: TCP
+    ingresses:
+      - httpPath: /(.*)
+        rewriteTarget: /$1
+        portName: application
+        ingressType: private
+    httproutes:
+      - portName: application
+        httpPath: (?i)^/
+        gatewayName: private
+        gatewayNamespace: traefik
+        rewriteTarget: /
+{{#connector}}
+  - name: {{vendor}}-connector
+    deployment:
+      podTemplate:
+        annotations:
+          metrics/scrape: "true"
+          metrics/port: "3000"
+          metrics/path: /internal/metrics
+        spec:
+          containers:
+            - name: {{vendor}}-connector
+              image:
+                name: {{vendor}}-connector
+              configRefs:
+                - global-configs
+                - {{vendor}}-connector-configs
+              secretRefs:
+                - database-secrets
+                - kafka-secrets
+              ports:
+                - containerPort: 3000
+              livenessProbe:
+                httpGet:
+                  path: /internal/health
+                  port: 3000
+                initialDelaySeconds: 60
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+              readinessProbe:
+                httpGet:
+                  path: /internal/health
+                  port: 3000
+                initialDelaySeconds: 45
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 3
+              securityContext:
+                allowPrivilegeEscalation: false
+              resources:
+                requests:
+                  memory: "1Gi"
+                  cpu: "250m"
+                limits:
+                  memory: "2Gi"
+    horizontalpodautoscaler:
+      minReplicas: 2
+      maxReplicas: 4
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 67
+        - type: Resource
+          resource:
+            name: memory
+            target:
+              type: Utilization
+              averageUtilization: 67
+{{/connector}}

@@ -1,0 +1,14 @@
+{
+  "name": "mx-integration",
+  "owner": {
+    "name": "MaxSight Platform Data Services"
+  },
+  "description": "Internal marketplace for Moody's MaxSight third-party integration tooling.",
+  "plugins": [
+    {
+      "name": "mx-integration",
+      "source": "./mx-integration",
+      "description": "Scaffolds, documents and guards Moody's third-party vendor integrations built on the mx-newsedge shape."
+    }
+  ]
+}

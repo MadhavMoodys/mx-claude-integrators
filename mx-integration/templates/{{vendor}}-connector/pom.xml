@@ -1,0 +1,143 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.15</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.moodys.maxsight</groupId>
+    <artifactId>{{vendor}}-connector</artifactId>
+    <version>0.1.0</version>
+    <name>{{vendor}}-connector</name>
+    <description>Orchestrator connector for the {{Vendor}} data source, using the inbox/outbox pattern from mx-framework-java.</description>
+
+    <properties>
+        <tomcat.version>10.1.56</tomcat.version>
+        <java.version>21</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <lombok.version>1.18.42</lombok.version>
+        <mx-framework.version>1.0.20260826.1</mx-framework.version>
+        <testcontainers.version>1.19.3</testcontainers.version>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>moodys-jfrog</id>
+            <url>https://moodys.jfrog.io/artifactory/maven-ci-local/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <!-- ==================== Spring Boot ==================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+
+        <!-- ==================== Internal ==================== -->
+        <!-- Kafka consumer starter: consumer roles, retry/DLQ, metrics, health -->
+        <dependency>
+            <groupId>com.moodys.mx</groupId>
+            <artifactId>mx-consumer-spring-boot-starter</artifactId>
+            <version>${mx-framework.version}</version>
+        </dependency>
+
+        <!-- Worker starter: JobRepository, WorkerJob, JobHandler, RetriableException -->
+        <dependency>
+            <groupId>com.moodys.mx</groupId>
+            <artifactId>mx-worker-spring-boot-starter</artifactId>
+            <version>${mx-framework.version}</version>
+        </dependency>
+
+        <!-- Generated protobuf classes for the orchestrator subscription contract -->
+        <dependency>
+            <groupId>com.moodys.mx</groupId>
+            <artifactId>mx-orchestrator-subscriptions-proto</artifactId>
+            <version>${mx-framework.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.moodys.mx</groupId>
+            <artifactId>mx-http-client-spring-boot-starter</artifactId>
+            <version>${mx-framework.version}</version>
+        </dependency>
+
+        <!-- ==================== Provided / Optional ==================== -->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- ==================== Runtime ==================== -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- ==================== Test ==================== -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>${testcontainers.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <finalName>{{vendor}}-connector</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <parameters>true</parameters>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

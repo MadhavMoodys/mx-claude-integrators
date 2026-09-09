@@ -1,0 +1,31 @@
+name: {{vendor}}
+targets:
+  - !java
+    type: java
+    name: {{vendor}}
+    jdkVersion: jdk21
+    tests:
+    - runner: maven
+  - !docker
+    type: docker
+    name: {{vendor}}
+    images:
+    - imageName: {{vendor}}-api
+      dockerFile: Dockerfile
+      buildArgs:
+        BINARY_NAME: api
+{{#connector}}
+    - imageName: {{vendor}}-connector
+      dockerFile: Dockerfile
+      buildArgs:
+        BINARY_NAME: connector
+{{/connector}}
+    outputs:
+    - !docker-repository
+      type: docker
+      distribution: remote
+      images:
+      - {{vendor}}-api
+{{#connector}}
+      - {{vendor}}-connector
+{{/connector}}

@@ -1,0 +1,40 @@
+# Every credential the service needs enters here and only here, as
+# $(Secret.NAME). It reaches the code as an ${ENV_VAR} placeholder in
+# application.yml -- never as a literal in a .java or .yml file.
+configs:
+  - name: global-configs
+    data:
+      APP_ENV: "$(Config.APP_ENV)"
+      RELEASE: $(Context.Settings.BUILD_NUMBER_UNDERSCORE)
+      FRONTEND_URL: "$(Config.FRONTEND_URL)"
+      BUILD_ENVIRONMENT: $(Context.Settings.BUILD_ENVIRONMENT)
+      BUILD_NUMBER_UNDERSCORE: $(Context.Settings.BUILD_NUMBER_UNDERSCORE)
+      BLOB_STORAGE_PROXY_URL: "https://mx-blob-storage-proxy.$(Context.Deploy.PRIVATE_BASE_HOSTNAME)"
+      OTEL_EXPORTER_OTLP_PROTOCOL: "grpc"
+  - name: {{vendor}}-api-configs
+    data:
+      {{VENDOR}}_BASE_URL: "$(Config.{{VENDOR}}_BASE_URL)"
+{{#connector}}
+  - name: {{vendor}}-connector-configs
+    data:
+      JAVA_TOOL_OPTIONS: "-XX:MaxRAMPercentage=50.0"
+      KAFKA_BROKERS: "@!Resources.GetResource('{{vendor}}-confluent-sa').GetOutput('cluster_bootstrap_endpoint')"
+      BACKEND_URL: "http://{{vendor}}-api"
+      KAFKA_SASL_MECHANISM: PLAIN
+      KAFKA_SECURITY_PROTOCOLS: SASL_SSL
+      DD_TRACE_SPAN_ATTRIBUTE_SCHEMA: v1
+{{/connector}}
+secrets:
+  - name: {{vendor}}-api-secrets
+    data:
+      {{VENDOR}}_API_KEY: "$(Secret.{{VENDOR}}_API_KEY)"
+      JWT_PUBLIC_KEY: "$(Secret.JWT_PUBLIC_KEY)"
+{{#connector}}
+  - name: kafka-secrets
+    data:
+      KAFKA_SASL_USERNAME: "@!Resources.GetResource('{{vendor}}-confluent-sa').GetOutput('api_key_id')"
+      KAFKA_SASL_PASSWORD: "@!Resources.GetResource('{{vendor}}-confluent-sa').GetOutput('api_key_secret')"
+  - name: database-secrets
+    data:
+      DATABASE_URL: "@!Resources.GetResource('mx-{{vendor}}-db').GetOutput('connection_string_ssl_true')"
+{{/connector}}

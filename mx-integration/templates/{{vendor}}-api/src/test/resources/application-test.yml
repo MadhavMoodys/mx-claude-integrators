@@ -1,0 +1,25 @@
+# Fake credentials, and only ever fake ones. The secret-guard hook exempts src/test so
+# fixtures like these are writable; that exemption is not licence to point a test at a
+# real vendor account.
+{{vendor}}:
+  base-url: http://localhost:0
+  api-key: test-api-key
+  username: test-user
+  password: test-password
+  request-timeout: 1000
+  token-refresh-buffer-minutes: 10
+  retry-max-wait-seconds: 1
+
+mx:
+  http:
+    client:
+      clients:
+        {{vendor}}:
+          base-url: http://localhost:0
+
+resilience4j:
+  retry:
+    instances:
+      {{vendor}}Api:
+        max-attempts: 1
+        wait-duration: 1ms

@@ -1,0 +1,18 @@
+stages:
+  - template: map/pipeline.yaml@platform
+    parameters:
+      overrideDeployPoolName: MCPDeployAutomationPool
+      overrideBuildPoolName: MCPBuildAutomationPool
+      version: 1.0
+      targets:
+        - name: {{vendor}}
+          lang: java
+          root: true
+        - name: {{vendor}}
+          lang: docker
+          root: true
+      service:
+        name: mx-{{vendor}}
+        externalName: mx-{{vendor}}
+        overrideK8sResourceDefaults: true
+        overrideK8sHpaDefaults: true

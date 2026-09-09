@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.DS_Store
+
+# Scaffolder smoke-test output, if anyone points --out at this tree.
+/out/

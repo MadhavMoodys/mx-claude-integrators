@@ -1,0 +1,9 @@
+{
+  "name": "mx-integration",
+  "description": "Scaffolds, documents and guards Moody's third-party vendor integrations built on the mx-newsedge shape.",
+  "version": "0.1.0",
+  "author": {
+    "name": "MaxSight Platform Data Services"
+  },
+  "keywords": ["moodys", "integration", "spring-boot", "scaffold"]
+}

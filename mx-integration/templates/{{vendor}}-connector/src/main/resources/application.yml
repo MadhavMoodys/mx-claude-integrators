@@ -1,0 +1,130 @@
+management:
+  endpoints:
+    web:
+      # /internal, not /actuator: the deployment's liveness and readiness probes point here.
+      base-path: /internal
+      exposure:
+        include: health,metrics
+  endpoint:
+    health:
+      show-details: always
+  tracing:
+    sampling:
+      probability: 1.0
+  metrics:
+    tags:
+      service: {{vendor}}-connector
+
+otel:
+  instrumentation:
+    micrometer:
+      enabled: true
+    spring-webmvc:
+      enabled: false
+    spring-web:
+      enabled: false
+
+mx:
+  kafka:
+    brokers: ${KAFKA_BROKERS:localhost:9092}
+    consumer:
+      properties:
+        max.poll.interval.ms: ${KAFKA_MAX_POLL_INTERVAL_MS:900000}
+        security.protocol: ${KAFKA_SECURITY_PROTOCOLS}
+        sasl.mechanism: ${KAFKA_SASL_MECHANISM}
+        sasl.jaas.config: >-
+          org.apache.kafka.common.security.plain.PlainLoginModule required
+          username="${KAFKA_SASL_USERNAME}"
+          password="${KAFKA_SASL_PASSWORD}";
+    producer:
+      properties:
+        security.protocol: ${KAFKA_SECURITY_PROTOCOLS}
+        sasl.mechanism: ${KAFKA_SASL_MECHANISM}
+        sasl.jaas.config: >-
+          org.apache.kafka.common.security.plain.PlainLoginModule required
+          username="${KAFKA_SASL_USERNAME}"
+          password="${KAFKA_SASL_PASSWORD}";
+        # Bound how long an individual send() can block on metadata/buffer, so the outbox worker's
+        # send loop cannot exceed the publish timeout while holding its DB transaction open.
+        max.block.ms: ${KAFKA_MAX_BLOCK_MS:30000}
+
+  telemetry:
+    endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT:http://localhost:4317}
+
+  service:
+    name: {{vendor}}-connector
+    version: ${BUILD_NUMBER_UNDERSCORE}
+    port: ${SERVER_PORT:3000}
+
+  consumers:
+    subscriptions:
+      topics:
+        - maxsight.orchestrator.{{vendor}}-connector
+      group-id: mx-{{vendor}}-connector
+      # Bean name, not class name. The consumer writes straight to the inbox table and returns;
+      # all real work happens later on the inbox worker, off the Kafka poll thread.
+      handler-bean: inboxHandler
+      max-attempts: 5
+      max-backoff: 30s
+      concurrency: 2
+      dead-letter-sink:
+        type: KAFKA
+        retriable-dlq-topic: subscriptions-dlq.retriable
+        non-retriable-dlq-topic: subscriptions-dlq.non-retriable
+
+  workers:
+    inbox:
+      enabled: true
+      # Total worker threads across all pools must stay inside the Hikari pool (default 10).
+      concurrency: 2
+      batch-size: 1
+      poll-interval: 500ms
+      max-retries: 5
+      retry-backoff: 1s
+      repository-bean: inboxJobRepository
+      handler-bean: inboxWorkerHandler
+    outbox:
+      enabled: true
+      concurrency: 2
+      batch-size: 50          # claim & publish up to 50 rows per transaction (a LIMIT, not a target)
+      poll-interval: 500ms
+      max-retries: 5
+      retry-backoff: 1s
+      repository-bean: outboxJobRepository
+      handler-bean: outboxWorkerHandler
+
+  http:
+    client:
+      clients:
+        {{vendor}}-service:
+          base-url: ${BACKEND_URL:http://localhost:3000}
+          internal: true
+
+spring:
+  application:
+    name: {{vendor}}-connector
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/{{vendor}}_connector}
+  jpa:
+    hibernate:
+      # validate, never update: Flyway owns the schema. A drift here should fail the boot.
+      ddl-auto: validate
+    open-in-view: false
+  kafka:
+    template:
+      observation-enabled: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    validate-on-migrate: true
+
+connector:
+  name: maxsight.orchestrator.{{vendor}}-connector
+  outbox-topic: maxsight.orchestrator.inbox
+  # TODO(TICKET-000): point at the real {{vendor}}-api endpoint this connector calls.
+  api-endpoint: ${{{VENDOR}}_API_ENDPOINT:/internal/{{vendor}}/data}
+
+server:
+  port: ${SERVER_PORT:3000}
+  shutdown: graceful

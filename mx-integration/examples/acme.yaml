@@ -1,0 +1,5 @@
+# Example spec. Copy to integration.yaml at the new repo root and edit.
+vendor: acme
+display_name: Acme
+ticket: M3PDS-999
+connector: false

@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "mx-integration": {
+      "source": {
+        "source": "github",
+        "repo": "moodys/mx-integration-plugin"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "mx-integration@mx-integration": true
+  }
+}
