@@ -1,6 +1,7 @@
-# mx-integration-plugin
+# mx-claude-integrators
 
-A Claude Code plugin that scaffolds, documents and guards Moody's MaxSight
+Claude Code tooling for the integrator team. Today that is **mx-integration**, a
+plugin that scaffolds, documents and guards Moody's MaxSight
 third-party vendor integrations.
 
 `mx-newsedge` was the first of these, and it settled into a repeatable shape: a
@@ -38,7 +39,7 @@ repo and trusts the folder gets the skills and hooks with **no command to run**.
 To add it to a repo by hand:
 
 ```bash
-claude plugin marketplace add moodys/mx-integration-plugin
+claude plugin marketplace add MadhavMoodys/mx-claude-integrators
 claude plugin install mx-integration@mx-integration
 ```
 
@@ -52,7 +53,7 @@ display_name: Acme
 ticket: M3PDS-999
 connector: false
 YAML
-python3 ../mx-integration-plugin/mx-integration/scripts/scaffold.py \
+python3 ../mx-claude-integrators/mx-integration/scripts/scaffold.py \
   --spec integration.yaml --out .
 ```
 
