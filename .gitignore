@@ -4,3 +4,6 @@ __pycache__/
 
 # Scaffolder smoke-test output, if anyone points --out at this tree.
 /out/
+
+# Maven output, if anyone builds the templates in place.
+target/
